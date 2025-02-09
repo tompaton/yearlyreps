@@ -3,6 +3,7 @@ from nanodjango import Django
 
 app = Django(SQLITE_DATABASE="data/yearlyreps.db")
 
+
 @app.admin
 class Goal(models.Model):
     goal_id = models.AutoField(primary_key=True, blank=False, null=False)
@@ -15,7 +16,8 @@ class Goal(models.Model):
         db_table = "goal"
 
     def __str__(self):
-        return f'{self.goal} ({self.goal_id})'
+        return f"{self.goal} ({self.goal_id})"
+
 
 @app.admin
 class Reps(models.Model):
@@ -30,4 +32,4 @@ class Reps(models.Model):
         db_table = "reps"
 
     def __str__(self):
-        return f'{self.date} {self.count} {self.goal} ({self.rep_id})'
+        return f"{self.date} {self.count} {self.goal} ({self.rep_id})"
