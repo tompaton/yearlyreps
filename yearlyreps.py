@@ -1,10 +1,12 @@
 from datetime import date
 from django.db import models
+from django.shortcuts import get_object_or_404, get_list_or_404
 from nanodjango import Django
 
 app = Django(SQLITE_DATABASE="data/yearlyreps.db")
 
-from ninja.pagination import paginate
+from ninja.pagination import paginate  # noqa: E402
+
 
 @app.admin
 class Goal(models.Model):
@@ -49,7 +51,7 @@ class RepsSchema(app.ninja.Schema):
     rep_id: int
     date: date
     count: int
-    notes: str |None
+    notes: str | None
 
 
 @app.api.get("/goals", response=list[GoalSchema])
@@ -59,15 +61,15 @@ def goals(request):
 
 @app.api.get("/goals/{int:goal_id}", response=GoalSchema)
 def goal(request, goal_id: int):
-    return Goal.objects.get(goal_id=goal_id)
+    return get_object_or_404(Goal, goal_id=goal_id)
 
 
 @app.api.get("/goals/{int:goal_id}/reps", response=list[RepsSchema])
 @paginate
 def reps(request, goal_id: int):
-    return Reps.objects.filter(goal_id=goal_id).order_by("-date")
+    return get_list_or_404(Reps.objects.order_by("-date"), goal_id=goal_id)
 
 
 @app.api.get("/goals/{int:goal_id}/reps/{int:rep_id}", response=RepsSchema)
 def rep(request, goal_id: int, rep_id: int):
-    return Reps.objects.get(goal_id=goal_id, rep_id=rep_id)
+    return get_object_or_404(Reps, goal_id=goal_id, rep_id=rep_id)
