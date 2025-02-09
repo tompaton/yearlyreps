@@ -14,6 +14,8 @@ class Goal(models.Model):
         managed = False
         db_table = "goal"
 
+    def __str__(self):
+        return f'{self.goal} ({self.goal_id})'
 
 @app.admin
 class Reps(models.Model):
@@ -26,3 +28,6 @@ class Reps(models.Model):
     class Meta:
         managed = False
         db_table = "reps"
+
+    def __str__(self):
+        return f'{self.date} {self.count} {self.goal} ({self.rep_id})'
