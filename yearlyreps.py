@@ -1,8 +1,13 @@
-from datetime import date, datetime
+from dataclasses import dataclass
+from datetime import date, datetime, timedelta
 from django.contrib.auth import authenticate
 from django.db import models
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, get_list_or_404
+from mako.template import Template
 from nanodjango import Django
+from tally import Tally, TallyResults
+from typing import Iterator
 
 app = Django(SQLITE_DATABASE="data/yearlyreps.db")
 app.api.title = "Yearly Reps API Documentation"
@@ -124,3 +129,76 @@ def delete_rep(request, goal_id: int, rep_id: int):
     rep = get_object_or_404(Reps, goal_id=goal_id, rep_id=rep_id)
     rep.delete()
     return None
+
+
+@dataclass
+class Status:
+    name: str
+    notes: str
+    period_names: list[str]
+    targets: list[tuple[str, int]]
+    status: list[tuple[str, int]]
+    max_total: float
+    results: Iterator[TallyResults]
+
+
+def goal_status(
+    goal: Goal, today: date, show_all_dates: bool = True
+) -> Status:
+    tally = Tally.from_reps(goal.reps_set.all(), goal.target, today)
+    dates = list(tally.dates())
+    if not show_all_dates:
+        min_date = today + timedelta(days=-42)
+        max_date = today + timedelta(days=7)
+        dates = [date for date in reversed(list(dates)) if min_date <= date <= max_date]
+    return Status(
+        goal.goal,
+        goal.notes,
+        tally.period_names,
+        tally.targets(goal.target),
+        tally.status(today),
+        tally.max_total,
+        tally.results(dates, goal.target, today),
+    )
+
+
+@app.route("/goals/status")
+def get_goals_status_html(request):
+    today = date.today()
+    return HttpResponse(
+        Template(filename="templates/goal-status.html").render_unicode(
+            title="Yearly Goal Status",
+            today=today,
+            goals=[
+                goal_status(goal, today, show_all_dates=False)
+                for goal in Goal.objects.all()
+            ],
+        )
+    )
+
+
+@app.route("/goals/<int:goal_id>/status")
+def get_goal_status_html(request, goal_id: int):
+    today = date.today()
+    goal = get_object_or_404(Goal, goal_id=goal_id)
+    return HttpResponse(
+        Template(filename="templates/goal-status.html").render_unicode(
+            title=goal.goal, today=today, goals=[goal_status(goal, today)]
+        )
+    )
+
+
+@app.api.get("/goals/{int:goal_id}/status")
+def get_goal_status(request, goal_id: int):
+    today = date.today()
+    goal = get_object_or_404(Goal, goal_id=goal_id)
+    tally = Tally.from_reps(goal.reps_set.all(), goal.target, today)
+    return tally.status(today)
+
+
+@app.api.get("/goals/{int:goal_id}/status-v2")
+def get_goal_status_v2(request, goal_id: int):
+    today = date.today()
+    goal = get_object_or_404(Goal, goal_id=goal_id)
+    tally = Tally.from_reps(goal.reps_set.all(), goal.target, today)
+    return tally.status_v2(today, goal.target)

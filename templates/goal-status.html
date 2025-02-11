@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>${title}</title>
+        <style type="text/css">
+         body {
+             color: #334;
+         }
+         h1 {
+             font-size: 1.5em;
+             margin-bottom: 0.25em;
+         }
+         .column {
+             float: left;
+         }
+         th {
+             text-align: center;
+         }
+         tbody th {
+             text-align: left;
+             font-weight: normal;
+         }
+         td {
+             text-align: right;
+             font-variant-numeric: tabular-nums;
+         }
+         .notes {
+             text-align: left;
+         }
+         .weekend {
+             background-color: #f4f4f4;
+         }
+         .today {
+             background-color: rgba(96, 125, 139, 0.25);
+         }
+         td {
+             position: relative;
+         }
+         td.notes .bar {
+             position: absolute;
+             top: 1px;
+             left: 0px;
+             height: 17px;
+             background: linear-gradient(to right, rgba(0,0,0,0), 80%, rgba(175, 175, 200, 0.5));
+         }
+         td span {
+             font-size: 0.75em;
+         }
+
+         td.x {
+             position: relative;
+             width: 6em;
+         }
+         td.x.green.window {
+             color: #002f00;
+         }
+         td.x.red.window {
+             color: #350000;
+         }
+         td.x.green {
+             color: #004e00;
+         }
+         td.x.red {
+             color: #750000;
+         }
+         td div {
+             position: absolute;
+         }
+         td div.t {
+             width: 4em;
+             top: 2px;
+             left: 0
+         }
+         td div.s {
+             width: 2em;
+             top: 3px;
+             right: 0;
+             padding-right: 0.5em;
+             font-size: 0.75em;
+         }
+         td.x div.bar {
+             top: 0;
+             bottom: 0;
+         }
+         td.x.green.window div.bar {
+             background-color: rgba(86, 185, 73, 0.6);
+         }
+         td.x.green div.bar {
+             background-color: rgba(86, 185, 73, 0.2);
+         }
+         td.x.red.window div.bar {
+             background-color: rgba(238, 64, 53, 0.5);
+         }
+         td.x.red div.bar {
+             background-color: rgba(238, 64, 53, 0.10);
+         }
+         td.x div.bar2 {
+             top: 0;
+             bottom: 0;
+         }
+         td.x.green div.bar2 {
+             border-right: 2px solid white;
+         }
+         td.x.red div.bar2 {
+             border-right: 2px solid rgba(238, 64, 53, 0.25);
+         }
+         span.ticked {
+             color: rgba(86, 185, 73, 0.75);
+         }
+         span.missed {
+             color: silver;
+         }
+        </style>
+        <script type="text/javascript">
+         function show_totals(table) {
+             var max_total = +table.dataset.max_total;
+             table.querySelectorAll('tbody tr .notes').forEach(function(td) {
+                 var total = +td.dataset.total;
+                 if(total > 0) {
+                     addBar(td, 60 * total / max_total).title = total;
+                 }
+             });
+
+             var max_tally = {};
+             table.querySelectorAll('tbody tr td.x').forEach(function(td) {
+                 var s = Math.max(+td.dataset.count, +td.dataset.target);
+                 var i = td.cellIndex;
+                 if(s > max_tally[i] || max_tally[i] === undefined) {
+                     max_tally[i] = s;
+                 }
+             });
+
+             table.querySelectorAll('tbody tr td.x').forEach(function(td) {
+                 var s = +td.dataset.target;
+                 var i = td.cellIndex;
+                 if(s > 0) {
+                     addBar(td, 95 * s / max_tally[i], 'bar2');
+                 }
+             });
+
+             table.querySelectorAll('tbody tr td.x').forEach(function(td) {
+                 var s = +td.dataset.count;
+                 var i = td.cellIndex;
+                 if(s > 0) {
+                     addBar(td, 95 * s / max_tally[i]);
+                 }
+             });
+         }
+
+         function addBar(td, width, cls) {
+             var div = document.createElement('div');
+             div.classList.add(cls || 'bar');
+             div.style.width = width.toFixed(0) + '%';
+             td.insertBefore(div, td.firstChild);
+             return div;
+         }
+        </script>
+    </head>
+    <body onload="document.querySelectorAll('.column table').forEach(show_totals)">
+        % for goal in goals:
+        <div class="column">
+            <header>
+                <h1>${goal.name}</h1>
+                <p>${goal.notes}</p>
+            </header>
+            <table data-max_total="${goal.max_total}">
+                <thead>
+                    <tr>
+                        <th colspan="2">Date</th>
+                        % for name in goal.period_names:
+                            <th>${name}</th>
+                        % endfor
+                        <th style="width: 10em;">Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th>&nbsp;</th>
+                        <th></th>
+                        % for (name1, target), (name2, days) in zip(goal.targets, goal.status):
+                            <td>
+                                <div class="t">${target}</div>
+                                <div class="s">${f'{days:+d}'}</div>
+                            </td>
+                        % endfor
+                        <td></td>
+                    </tr>
+                    % for row in goal.results:
+                    <tr class="${'today' if row.date == today else ''} ${'weekend' if row.date.isoweekday() > 5 else ''}">
+                        <th>${row.date}</th>
+                        <th>${row.date.strftime('%a')}</th>
+                        % for period in row.periods:
+                            <td class="x ${' '.join(period.classes)}"
+                                title="Target: ${period.target} (${f'{period.tally-period.target:+d}'})"
+                                data-target="${period.target}"
+                                data-count="${period.tally}">
+                                <div class="t">${period.tally}</div>
+                                <div class="s">${f'{period.status:+d}'}</div>
+                            </td>
+                        % endfor
+                        <td class="notes" data-total="${row.total}">
+                            % if row.ticked:
+                                <span class="ticked">&#x25c6;</span>
+                            % else:
+                                <span class="missed">&#x25c7;</span>
+                            % endif
+                            ${row.notes}
+                        </td>
+                    </tr>
+                    % endfor
+                </tbody>
+            </table>
+        </div>
+        % endfor
+    </body>
+</html>
