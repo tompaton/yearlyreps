@@ -96,10 +96,8 @@ def delete_rep(request, goal_id: int, rep_id: int):
 
 @router.get("/goals/{int:goal_id}/status")
 def get_goal_status(request, goal_id: int):
-    today = date.today()
-    goal = get_object_or_404(Goal, goal_id=goal_id)
-    tally = Tally.from_reps(goal.reps_set.all(), goal.target, today)
-    return tally.status(today)
+    # handled in views.get_goal_status_html
+    pass
 
 
 @router.get("/goals/{int:goal_id}/status-v2")

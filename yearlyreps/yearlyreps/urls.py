@@ -20,7 +20,7 @@ from django.urls import path
 from app import views
 from ninja import NinjaAPI
 
-api = NinjaAPI()
+api = NinjaAPI(docs_url="/api/docs")
 api.title = "Yearly Reps API Documentation"
 
 api.add_router("/", "app.api.router")
@@ -29,5 +29,5 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("goals/status", views.get_goals_status_html),
     path("goals/<int:goal_id>/status", views.get_goal_status_html),
-    path("api/", api.urls),
+    path("", api.urls),
 ]

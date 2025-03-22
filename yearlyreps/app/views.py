@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import date, timedelta
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from mako.template import Template
 from .models import Goal
 from django.shortcuts import get_object_or_404
@@ -25,11 +25,15 @@ def get_goals_status_html(request):
 def get_goal_status_html(request, goal_id: int):
     today = date.today()
     goal = get_object_or_404(Goal, goal_id=goal_id)
-    return HttpResponse(
-        Template(filename="app/templates/goal-status.html").render_unicode(
-            title=goal.goal, today=today, goals=[goal_status(goal, today)]
+    if request.accepts("text/html"):
+        return HttpResponse(
+            Template(filename="app/templates/goal-status.html").render_unicode(
+                title=goal.goal, today=today, goals=[goal_status(goal, today)]
+            )
         )
-    )
+    else:
+        tally = Tally.from_reps(goal.reps_set.all(), goal.target, today)
+        return JsonResponse(tally.status(today), safe=False)
 
 
 @dataclass
