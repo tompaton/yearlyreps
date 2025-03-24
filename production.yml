@@ -1,0 +1,17 @@
+version: "3"
+services:
+  yearlyreps:
+    image: registry.tompaton.com/tompaton/yearlyreps2
+    networks:
+      - www
+    ports:
+      - "8000:8000"
+    env_file: production.env
+    volumes:
+      - ./data/:/data
+    restart: unless-stopped
+
+networks:
+  www:
+    external:
+      name: www
