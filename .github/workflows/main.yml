@@ -32,7 +32,7 @@ jobs:
         host: ${{ vars.SERVER_HOST }}
         username: ${{ vars.SERVER_USERNAME }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        source: "production.env,production.yml"
+        source: "production.yml"
         target: /var/data/yearlyreps.tompaton.com/
 
     - name: Deploy on server
