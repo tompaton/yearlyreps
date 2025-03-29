@@ -4,7 +4,9 @@ services:
     image: registry.tompaton.com/tompaton/yearlyreps2
     networks:
       - www
-    env_file: production.env
+    env_file:
+      - production.env
+      - production-secrets.env
     volumes:
       - ./data/:/data
     restart: unless-stopped

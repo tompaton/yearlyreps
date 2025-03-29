@@ -6,7 +6,9 @@ dist/
 wheels/
 *.egg-info
 
+production-secrets.env
+dev-secrets.env
+
 # Virtual environments
 .venv
-*.env
 /data
