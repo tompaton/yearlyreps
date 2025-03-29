@@ -1,0 +1,8 @@
+services:
+  yearlyreps:
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data/:/data
+    env_file: dev-secrets.env
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
